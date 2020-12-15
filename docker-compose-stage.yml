@@ -1,0 +1,34 @@
+version: '3.7'
+services:
+  db:
+    image: postgres:12
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - ./data/postgres/data:/var/lib/postgresql/data
+
+    networks:
+      - local
+  app:
+    build: .
+    command: gunicorn --bind 0.0.0.0:80 --chdir /app/src main:app --workers 2 --max-requests 10000
+    restart: on-failure
+    environment:
+      - FLASK_APP=src/main.py
+      - FLASK_DEBUG=0
+      - FLASK_ENV=docker
+    env_file:
+      - ./.env
+    volumes:
+      - .:/app
+    ports:
+      - "0.0.0.0:80:80"
+    depends_on:
+      - db
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge

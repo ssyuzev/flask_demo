@@ -1,0 +1,496 @@
+components:
+  schemas:
+    response_401:
+      properties:
+        msg:
+          example: Missing Authorization Header
+          type: string
+      type: object
+    response_422:
+      properties:
+        msg:
+          example: Not enough segments
+          type: string
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+info:
+  title: flask_app_1 API Docs
+  version: v1
+openapi: 3.0.3
+paths:
+  /api/change_password:
+    put:
+      requestBody:
+        content:
+          application/json:
+            examples:
+              Invalid update:
+                description: Returns 400 statusCode.
+                value:
+                  confirmation_password: NotMatching
+                  new_password: NewPass
+                  old_password: SomePass
+              Valid update:
+                description: Updates user`s password.
+                value:
+                  confirmation_password: NewPass
+                  new_password: NewPass
+                  old_password: SomePass
+            schema:
+              additionalProperties: false
+              properties:
+                confirmation_password:
+                  minLength: 1
+                  type: string
+                new_password:
+                  minLength: 1
+                  type: string
+                old_password:
+                  minLength: 1
+                  type: string
+              required:
+              - old_password
+              - new_password
+              - confirmation_password
+              type: object
+        description: Updates current user`s password
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                message: Password updated successfully
+                username: htmlprogrammer,
+          description: Successful Operation
+        '400':
+          content:
+            application/json:
+              example:
+                message: New password doesn't match with confirmation password.
+          description: Bad request
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+          description: Unauthorized
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_422'
+          description: Bad token header
+      security:
+      - bearerAuth: []
+      summary: Update user`s password
+      tags:
+      - User
+  /api/login:
+    post:
+      requestBody:
+        content:
+          application/json:
+            examples:
+              Valid login:
+                description: Login user
+                value:
+                  password: CoolPass
+                  username: htmlprogrammer
+            schema:
+              additionalProperties: false
+              properties:
+                password:
+                  minLength: 1
+                  type: string
+                username:
+                  minLength: 1
+                  type: string
+              required:
+              - username
+              - password
+              type: object
+        description: Returns message, Access token and Refresh token.
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                access_token: some_huge_string
+                message: Logged in as htmlprogrammer
+                refresh_token: also_some_huge_string
+          description: Successful login Returns message, `AccessToken` and `RefreshToken`.
+        '401':
+          content:
+            application/json:
+              example:
+                message: Wrong password
+          description: Wrong password.
+        '404':
+          content:
+            application/json:
+              example:
+                message: User htmlprogrammer doesn't exist
+          description: User does not exist.
+      summary: Get access and refresh tokens
+      tags:
+      - Auth
+  /api/logout_access:
+    post:
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                message: Access token has been revoked successfully
+          description: Successful Operation
+        '401':
+          content:
+            application/json:
+              example:
+                msg: Expired access token
+          description: Expired access token.
+        '422':
+          content:
+            application/json:
+              example:
+                msg: Not enough segments
+          description: Broken access token.
+        '500':
+          content:
+            application/json:
+              example:
+                message: Something went wrong while revoking token
+          description: Server error.
+      security:
+      - bearerAuth: []
+      summary: Log user out using AccesToken. (throws token to blacklist)
+      tags:
+      - Auth
+  /api/logout_refresh:
+    post:
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                message: Refresh token has been revoked successfully
+          description: Successful Operation
+        '401':
+          content:
+            application/json:
+              example:
+                msg: Expired refresh token
+          description: Expired refresh token.
+        '422':
+          content:
+            application/json:
+              example:
+                msg: Not enough segments
+          description: Broken refresh token.
+        '500':
+          content:
+            application/json:
+              example:
+                message: Something went wrong while revoking token
+          description: Server error.
+      security:
+      - bearerAuth: []
+      summary: Log user out using RefreshToken. (throws token to blacklist)
+      tags:
+      - Auth
+  /api/refresh:
+    get:
+      description: Operation requires authorization header (Bearer)
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                access_token: some.long.string
+          description: Successful Operation Returns new `access_token`.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+          description: Unauthorized
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_422'
+          description: Bad token header
+      security:
+      - bearerAuth: []
+      summary: Refresh access token
+      tags:
+      - Auth
+  /api/users/:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+              - active: true
+                avatar: http://myphoto.com
+                created: '2020-12-03 12:47:36.147214'
+                username: htmlprogrammer
+              - active: false
+                avatar: http://catpics.com
+                created: '2007-12-03 12:47:36.147214'
+                username: cat
+          description: Successful user creation
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+          description: Unauthorized
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_422'
+          description: Bad token header
+      security:
+      - bearerAuth: []
+      summary: Get user list
+      tags:
+      - User
+    post:
+      requestBody:
+        content:
+          application/json:
+            examples:
+              Valid sign up:
+                description: Creates a user with these username, password and avatar
+                  url.
+                value:
+                  avatar_url: http://myphoto.com
+                  password: CoolPass
+                  username: htmlprogrammer
+            schema:
+              additionalProperties: false
+              properties:
+                avatar_url:
+                  minLength: 1
+                  type: string
+                password:
+                  minLength: 1
+                  type: string
+                username:
+                  minLength: 1
+                  type: string
+              required:
+              - username
+              - password
+              type: object
+        description: 'Creates a new user if there is no user with the same username.
+          </br> </br>
+
+          Takes username, password and avatar_url(optional, default - '' '') as a
+          request body.
+
+          '
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                avatar_url: http://myphoto.com
+                date_created: '2020-12-03 12:47:36.147214'
+                message: User htmlprogrammer was created
+                username: htmlprogrammer
+          description: Successful user creation
+        '400':
+          content:
+            application/json:
+              example:
+                message: user already exists.
+          description: User already exists
+      summary: Create user
+      tags:
+      - User
+  /api/users/{username}:
+    delete:
+      parameters:
+      - description: String username
+        in: path
+        name: username
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                active: true
+                date_created: 2020-12-03_12:47:36.147214
+                username: htmlprogrammer
+          description: Successful Operation, user status updated
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              example:
+                message: User not found
+          description: User is not in the database
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_422'
+          description: Bad token header
+        '500':
+          content:
+            application/json:
+              example:
+                message: Something went wrong
+          description: Bad request
+      security:
+      - bearerAuth: []
+      summary: Delete user (update active to False).
+      tags:
+      - User
+    get:
+      parameters:
+      - description: String username
+        in: path
+        name: username
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                active: true
+                avatar_url: http://myphoto.com
+                date_created: 2020-12-03_12:47:36.147214
+                password: somepassword
+                username: htmlprogrammer
+          description: Successful Operation
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              example:
+                message: The requested URL was not found on the server. If you entered
+                  the URL manually please check your spelling and try again.
+          description: User is not in the database
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_422'
+          description: Bad token header
+      security:
+      - bearerAuth: []
+      summary: Get info about user
+      tags:
+      - User
+    put:
+      parameters:
+      - description: String username
+        in: path
+        name: username
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples:
+              Invalid update:
+                description: Returns 400 statusCode.
+                value:
+                  avatar_url: ''
+              Valid update:
+                description: Updates user`s avatar url.
+                value:
+                  avatar_url: http://myphoto2.com
+            schema:
+              additionalProperties: false
+              properties:
+                avatar_url:
+                  minLength: 1
+                  type: string
+              required:
+              - avatar_url
+              type: object
+        description: Updates user`s avatar_url
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                active: true
+                avatar_url: http://myphoto2.com
+                date_created: 2020-12-03_12:47:36.147214
+                username: htmlprogrammer
+          description: Successful Operation
+        '400':
+          content:
+            application/json:
+              example:
+                message: New avatar url is empty
+          description: Bad request
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_401'
+          description: Unauthorized
+        '404':
+          content:
+            application/json:
+              example:
+                message: The requested URL was not found on the server. If you entered
+                  the URL manually please check your spelling and try again.
+          description: User is not in the database
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_422'
+          description: Bad token header
+      security:
+      - bearerAuth: []
+      summary: Update user`s avatar_url
+      tags:
+      - User
+  /healthcheck:
+    get:
+      responses:
+        '200':
+          description: Successful Health Check
+      summary: Just to check if service is up
+      tags:
+      - Health check
+servers:
+- url: http://0.0.0.0/
+tags:
+- name: Health check
+- name: Auth
+- name: User
